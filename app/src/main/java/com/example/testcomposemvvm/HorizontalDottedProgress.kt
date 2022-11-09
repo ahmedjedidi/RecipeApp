@@ -16,6 +16,7 @@ class HorizontalDottedProgress : View {
 //actual dot radius
 private val mDotRadius = 5
 
+
 //Bounced Dot Radius
 private val mBounceDotRadius = 8
 
