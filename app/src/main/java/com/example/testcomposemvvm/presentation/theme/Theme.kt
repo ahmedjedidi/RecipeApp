@@ -39,7 +39,9 @@ fun AppTheme(
     content : @Composable () -> Unit
 ){
    MaterialTheme(
-       colors =  if (darkTheme) DarkThemeColors else LightThemeColors
+       colors =  if (darkTheme) DarkThemeColors else LightThemeColors,
+       typography = QuickSendTypography,
+       shapes = AppShapes
    ) {
     content()
    }

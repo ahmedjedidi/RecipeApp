@@ -15,6 +15,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
 
+
+const val PAGE_SIZE=30
 @HiltViewModel
 class RecipeListViewModel
 
@@ -32,20 +34,72 @@ class RecipeListViewModel
         var scrollPosition : Float = 0f
         val loading = mutableStateOf(false)
         val isDark = mutableStateOf(getThemeInPreference())
+        var recipeListScrollPosition = 0
+        val page= mutableStateOf(1)
     init {
-        newSearch()
+        onTriggerEvent(RecipeListEvent.NewSearchEvent)
         Log.d("isDark",getThemeInPreference().toString())
     }
 
-     fun newSearch(){
+    fun onTriggerEvent(event:RecipeListEvent){
+        viewModelScope.launch {
+            try {
+             when (event){
+                 is RecipeListEvent.NewSearchEvent -> newSearch()
+                 is RecipeListEvent.NextPageEvent -> newPage()
+             }
+            } catch (e:Exception){
+                Log.e("Exception","message Exception :${e.message} cause Exception ${e.cause}")
+            }
+        }
+    }
+
+     private suspend fun newSearch(){
          resetSearchState()
          Log.d("viewModel","new Search")
          loading.value=true
-        viewModelScope.launch {
             val  result =  recipeRepository.search(token , 1,query.value)
             recipes.value = result
             loading.value=false
+
+    }
+
+    private suspend fun newPage(){
+            //prevent duplicate events because recompose is happening so quickly
+            // block get new page if is new page request is already in progess
+            if((recipeListScrollPosition+1)>= (PAGE_SIZE * page.value)) {
+                loading.value = true
+                incrementPage()
+                Log.d("new Page func", "next page= ${page.value}")
+
+                if (page.value > 1) {
+                    val result = recipeRepository.search(
+                        token = token,
+                        page = page.value,
+                        query = query.value
+                    )
+                    Log.d("new Page func", "next Recipe= ${result}")
+                    appendRecipes(result)
+                }
+                loading.value = false
+
         }
+    }
+
+    //add new recipes to the current List of recipes
+
+    private fun appendRecipes(recipes: List<Recipe>){
+        val current = ArrayList(this.recipes.value)
+        current.addAll(recipes)
+        this.recipes.value=current
+    }
+
+    private fun incrementPage(){
+        page.value = page.value+1
+    }
+
+    fun onChangeRecipeScrollPosition(position:Int){
+        recipeListScrollPosition =position
     }
 
     private fun getThemeInPreference():Boolean{
@@ -63,6 +117,8 @@ class RecipeListViewModel
 
     private fun resetSearchState(){
         recipes.value= listOf()
+        page.value=1
+        onChangeRecipeScrollPosition(0)
         if(selectedCategory.value?.value != query.value)
             clearSelectedCategory()
     }
