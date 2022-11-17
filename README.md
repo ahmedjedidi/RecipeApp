@@ -1,5 +1,5 @@
 # RecipeApp
-Recipe Application using Kolin + jetpackcompose + mvvm Architechture
+Recipe Application using Ktolin + jetpackcompose + mvvm Architecture
 
 -Dependency Injection using Hilt <br />
 -Consume API Using Retrofit 2 <br />
